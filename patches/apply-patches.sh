@@ -2,10 +2,12 @@
 
 set -e
 
-source="$(pwd)/LineageOS_gsi"
+# Run from the root of the source tree; patches are located relative to this script.
+source="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 trebledroid="$source/patches/trebledroid"
 trebledroid_staging="$source/patches/trebledroid-staging"
 personal="$source/patches/personal"
+failed=()
 
 apply_patch_dir() {
     local patch_dir=$1
@@ -41,6 +43,7 @@ apply_patch_dir() {
                 git am --continue
             else
                 printf "### FAILED APPLYING: %s \n" "$patch"
+                failed+=("$patch")
             fi
         done
 
@@ -51,3 +54,10 @@ apply_patch_dir() {
 apply_patch_dir "$trebledroid" "TREBLEDROID"
 apply_patch_dir "$trebledroid_staging" "TREBLEDROID STAGING"
 apply_patch_dir "$personal" "PERSONAL"
+
+# Fail loudly instead of silently building without a patch.
+if [ ${#failed[@]} -gt 0 ]; then
+    printf "\n ### %d PATCH(ES) FAILED ###\n" "${#failed[@]}"
+    printf "  %s\n" "${failed[@]}"
+    exit 1
+fi
