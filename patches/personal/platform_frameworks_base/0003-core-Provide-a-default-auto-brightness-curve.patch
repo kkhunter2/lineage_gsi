@@ -1,0 +1,71 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: kkhunter2 <kkhunter@gmail.com>
+Date: Fri, 16 Oct 2026 08:58:17 +0900
+Subject: [PATCH] core: Provide a default auto-brightness curve
+
+AOSP ships config_autoBrightnessLevels and
+config_autoBrightnessLcdBacklightValues empty and
+config_automatic_brightness_available=false, leaving it to the vendor
+overlay. Many vendors never define a curve, so on a GSI the light sensor
+reads lux but BrightnessMappingStrategy gets no mapping and adaptive
+brightness is missing from Settings.
+
+Default to a 7-point lux -> backlight curve. A vendor overlay that defines
+its own curve still overrides these values.
+
+Tested on Lenovo Legion Y700 2022 (SD870, LCD) as an RRO.
+
+Change-Id: I77f9a643e217d31016c4880dad6ffad3014d6293
+---
+ core/res/res/values/config.xml | 19 ++++++++++++++++++-
+ 1 file changed, 18 insertions(+), 1 deletion(-)
+
+diff --git a/core/res/res/values/config.xml b/core/res/res/values/config.xml
+index fbe4c3280e49..d9be3979abf8 100644
+--- a/core/res/res/values/config.xml
++++ b/core/res/res/values/config.xml
+@@ -499,7 +499,7 @@
+ 
+     <!-- Flag indicating whether we should enable the automatic brightness.
+          Software implementation will be used if config_hardware_auto_brightness_available is not set -->
+-    <bool name="config_automatic_brightness_available">false</bool>
++    <bool name="config_automatic_brightness_available">true</bool>
+ 
+     <!-- Flag indicating whether we should enable the adaptive sleep.-->
+     <bool name="config_adaptive_sleep_available">false</bool>
+@@ -1740,7 +1740,15 @@
+          backlight values for lux levels between these control points.
+ 
+          Must be overridden in platform specific overlays -->
++    <!-- GSI: generic fallback curve for vendors that ship none; vendor overlays still win. -->
+     <integer-array name="config_autoBrightnessLevels">
++        <item>2</item>
++        <item>8</item>
++        <item>30</item>
++        <item>120</item>
++        <item>400</item>
++        <item>1200</item>
++        <item>4000</item>
+     </integer-array>
+ 
+     <!-- Array of light sensor lux values to define our levels for auto backlight brightness
+@@ -1783,7 +1791,16 @@
+          than the size of the config_autoBrightnessLevels array.
+          The brightness values must be between 0 and 255 and be non-decreasing.
+          This must be overridden in platform specific overlays -->
++    <!-- GSI: pairs with the fallback config_autoBrightnessLevels above (N + 1 entries). -->
+     <integer-array name="config_autoBrightnessLcdBacklightValues">
++        <item>2</item>
++        <item>4</item>
++        <item>12</item>
++        <item>45</item>
++        <item>90</item>
++        <item>120</item>
++        <item>160</item>
++        <item>255</item>
+     </integer-array>
+ 
+     <!-- Array of output values for LCD backlight in doze mode corresponding to the lux values
+-- 
+2.43.0
+
