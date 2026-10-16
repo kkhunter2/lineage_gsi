@@ -73,11 +73,48 @@ check() {
 
     "$ADB" shell pm path me.phh.treble.app | grep -q '^package:'; result "TrebleApp installed" $?
 
+    if prop ro.vendor.build.fingerprint | grep -q '^Lenovo/TB-9707F'; then
+        y700_checks "$display"
+    fi
+
     echo
     echo "$pass passed, $fail failed"
     echo "Manual: enroll a face in Settings > Security, lock, unlock with it;"
     echo "        toggle Adaptive brightness and cover the light sensor."
     [ "$fail" -eq 0 ]
+}
+
+# Lenovo Legion Y700 (2022) specifics. Runs inside check(), so it shares
+# result()/prop() and the relaxed error handling.
+y700_checks() {
+    local display="$1" sensors rate
+    echo
+    echo "--- Lenovo Legion Y700 (2022)"
+    "$ADB" shell cmd overlay list android | grep -qF '[x] me.phh.treble.overlay.lenovo.y700_2022'
+    result "Y700 overlay enabled" $?
+    ! "$ADB" shell pm list features | grep -q 'android.hardware.telephony'
+    result "telephony features removed (Wi-Fi only)" $?
+    [ -z "$("$ADB" shell pidof com.android.phone | tr -d '\r')" ]
+    result "com.android.phone not running" $?
+    rate="$(grep -m1 -oE 'renderFrameRate [0-9.]+' <<<"$display" | awk '{print int($2 + 0.5)}')"
+    [ "${rate:-0}" -ge 120 ]; result "panel at 120 Hz (now ${rate:-?})" $?
+    "$ADB" shell dumpsys input | grep -q 'Headset Jack'; result "headset jack input device" $?
+    sensors="$("$ADB" shell dumpsys sensorservice | tr -d '\r')"
+    grep -q 'ah1902 Hall Effect Sensor Wakeup' <<<"$sensors"; result "hall sensor (cover wake/sleep)" $?
+    grep -qiE 'ambient light|light sensor|\| *light' <<<"$sensors"; result "light sensor" $?
+
+    echo
+    echo "--- Y700 info for manual follow-up"
+    echo "cameras:       $("$ADB" shell dumpsys media.camera | grep -m1 -E 'Number of camera devices' | tr -d '\r')"
+    echo "DT2W node:     $("$ADB" shell 'ls /proc/gesture_control /sys/devices/virtual/touch/tp_dev/gesture_on 2>/dev/null' | tr -d '\r' | tr '\n' ' ')"
+    echo "pen input:     $("$ADB" shell dumpsys input | grep -m1 -oE 'NVTCapacitivePen' | tr -d '\r')"
+    echo "color mgmt:    use_color_management=$(prop ro.surface_flinger.use_color_management) vndk=$(prop ro.vndk.version)"
+    echo "DP extcon:     (system_server got EACCES here on another GSI)"
+    "$ADB" shell 'ls -Z /sys/devices/platform/soc/soc:qcom,msm-ext-disp/extcon/*/cable.*/name 2>/dev/null' | sed 's/^/               /'
+    echo "audio switch:  $("$ADB" shell 'ls /sys/class/switch 2>/dev/null' | tr -d '\r' | tr '\n' ' ')"
+    echo "microSD:       $("$ADB" shell sm list-disks | tr -d '\r' | tr '\n' ' ')"
+    echo "game lever:    $("$ADB" shell getevent -pl 2>/dev/null | grep -A6 -m1 'gpio-keys' | grep -oE 'KEY_[A-Z0-9_]+|SW_[A-Z_]+' | sort -u | tr '\n' ' ')"
+    echo "Manual: headphones in the jack, DP monitor audio, pen, DT2W in Phh Treble Settings > Lenovo, cover close/open."
 }
 
 case "${1:-}" in

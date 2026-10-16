@@ -45,9 +45,13 @@ depends on how closely the vendor followed Treble.
 
 ### Tested devices
 
-- Lenovo Legion Y700 2022 (TB-9707F, SD870, WiFi-only). For the WiFi-only
-  telephony crash loop, use `notelephony-module.zip` from
-  [y700-magisk-modules](https://github.com/kkhunter2/LineageOS_gsi/releases/tag/y700-magisk-modules).
+- Lenovo Legion Y700 2022 (TB-9707F, SD870, WiFi-only). Device support is
+  built in, so no Magisk modules are needed:
+  - starts at 120 Hz (AOSP otherwise caps this panel at 60 Hz),
+  - 3.5 mm headset detection through the jack's input device,
+  - telephony features and UI removed, which stops `com.android.phone`
+    from looping on a modem that isn't there,
+  - cover wake/sleep from the hall sensor (TrebleApp).
 - Samsung Galaxy A04 (SM-A045F): a user booted a build of this patch set via DSU.
 
 ## Build

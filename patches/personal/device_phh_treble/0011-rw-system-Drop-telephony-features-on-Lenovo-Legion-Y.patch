@@ -1,0 +1,80 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: kkhunter2 <kkhunter@gmail.com>
+Date: Fri, 16 Oct 2026 09:55:01 +0900
+Subject: [PATCH] rw-system: Drop telephony features on Lenovo Legion Y700
+ (2022)
+
+The TB-9707F is Wi-Fi only (no modem, no GNSS), but the GSI declares
+android.hardware.telephony*, so com.android.phone spins retrying RIL and
+the SIM, calling and mobile-data UI shows up.
+
+On that vendor fingerprint, bind-mount a list of unavailable telephony
+features over the GSI's telephony permission files. SystemConfig removes
+unavailable features after reading every partition, so this also drops
+any the vendor declares. Same feature list as the Magisk module verified
+on the device.
+---
+ base.mk                       |  1 +
+ files/wifi-only-telephony.xml | 17 +++++++++++++++++
+ rw-system.sh                  |  9 +++++++++
+ 3 files changed, 27 insertions(+)
+ create mode 100644 files/wifi-only-telephony.xml
+
+diff --git a/base.mk b/base.mk
+index 31be9b9..c92fa53 100644
+--- a/base.mk
++++ b/base.mk
+@@ -112,6 +112,7 @@ PRODUCT_COPY_FILES += \
+     device/phh/treble/files/mimix3-gpio-keys.kl.raw:system/phh/mimix3-gpio-keys.kl \
+     device/phh/treble/files/nokia-soc_gpio_keys.kl.raw:system/phh/nokia-soc_gpio_keys.kl \
+     device/phh/treble/files/lenovo-synaptics_dsx.kl.raw:system/phh/lenovo-synaptics_dsx.kl \
++    device/phh/treble/files/wifi-only-telephony.xml:system/phh/wifi-only-telephony.xml \
+     device/phh/treble/files/oppo-touchpanel.kl.raw:system/phh/oppo-touchpanel.kl \
+     device/phh/treble/files/google-uinput-fpc.kl.raw:system/phh/google-uinput-fpc.kl \
+     device/phh/treble/files/moto-uinput-egis.kl.raw:system/phh/moto-uinput-egis.kl \
+diff --git a/files/wifi-only-telephony.xml b/files/wifi-only-telephony.xml
+new file mode 100644
+index 0000000..751649c
+--- /dev/null
++++ b/files/wifi-only-telephony.xml
+@@ -0,0 +1,17 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Bind-mounted by rw-system.sh over the telephony permission files on
++     Wi-Fi-only devices. Declaring these features makes com.android.phone
++     keep retrying a modem that isn't there. -->
++<permissions>
++    <unavailable-feature name="android.hardware.telephony" />
++    <unavailable-feature name="android.hardware.telephony.gsm" />
++    <unavailable-feature name="android.hardware.telephony.cdma" />
++    <unavailable-feature name="android.hardware.telephony.ims" />
++    <unavailable-feature name="android.hardware.telephony.calling" />
++    <unavailable-feature name="android.hardware.telephony.data" />
++    <unavailable-feature name="android.hardware.telephony.messaging" />
++    <unavailable-feature name="android.hardware.telephony.radio.access" />
++    <unavailable-feature name="android.hardware.telephony.subscription" />
++    <unavailable-feature name="android.hardware.telephony.euicc" />
++    <unavailable-feature name="android.hardware.telephony.mbms" />
++</permissions>
+diff --git a/rw-system.sh b/rw-system.sh
+index 8ca3209..96488f9 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -428,6 +428,15 @@ if ! grep android.hardware.bluetooth /vendor/manifest.xml && ! grep android.hard
+     mount -o bind /mnt/phh/empty /system/etc/permissions/android.hardware.bluetooth_le.xml
+ fi
+ 
++# Wi-Fi-only devices: the GSI declares telephony, so com.android.phone keeps
++# retrying a radio that isn't there. Swap the telephony permission files for
++# a list of unavailable features (SystemConfig removes those last, whichever
++# partition declared them).
++if getprop ro.vendor.build.fingerprint | grep -qE '^Lenovo/TB-9707F'; then
++    mount -o bind /system/phh/wifi-only-telephony.xml /system/etc/permissions/android.hardware.telephony.gsm.xml
++    mount -o bind /mnt/phh/empty /system/etc/permissions/android.hardware.telephony.ims.xml
++fi
++
+ if getprop ro.hardware | grep -qF qcom && [ -f /sys/class/backlight/panel0-backlight/max_brightness ] &&
+     grep -qvE '^255$' /sys/class/backlight/panel0-backlight/max_brightness; then
+     setprop persist.sys.qcom-brightness "$(cat /sys/class/backlight/panel0-backlight/max_brightness)"
+-- 
+2.43.0
+

@@ -1,0 +1,93 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: kkhunter2 <kkhunter@gmail.com>
+Date: Fri, 16 Oct 2026 09:56:51 +0900
+Subject: [PATCH] Lenovo: Add Legion Y700 (2022) overlay
+
+TB-9707F: SD870, 8.8" 2560x1600 60/120 Hz LCD, Wi-Fi only.
+
+- Telephony UI off (no calls, SMS or mobile data).
+- Headset jack through input events: the kernel registers
+  "kona-mtp-snd-card Headset Jack" and has no h2w switch, so the switch
+  observer never sees a headset.
+- Default to 120 Hz. AOSP's config_defaultRefreshRate=60 is a global
+  [0, 60] vote that stays in force even when the peak-rate setting is
+  raised, which is why GSIs boot this panel at 60 Hz.
+---
+ Lenovo/Y700-2022/Android.mk            |  8 ++++++++
+ Lenovo/Y700-2022/AndroidManifest.xml   | 10 ++++++++++
+ Lenovo/Y700-2022/res/values/config.xml | 18 ++++++++++++++++++
+ overlay.mk                             |  1 +
+ 4 files changed, 37 insertions(+)
+ create mode 100644 Lenovo/Y700-2022/Android.mk
+ create mode 100644 Lenovo/Y700-2022/AndroidManifest.xml
+ create mode 100644 Lenovo/Y700-2022/res/values/config.xml
+
+diff --git a/Lenovo/Y700-2022/Android.mk b/Lenovo/Y700-2022/Android.mk
+new file mode 100644
+index 0000000..e2d2565
+--- /dev/null
++++ b/Lenovo/Y700-2022/Android.mk
+@@ -0,0 +1,8 @@
++LOCAL_PATH := $(call my-dir)
++include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS := optional
++LOCAL_PACKAGE_NAME := treble-overlay-lenovo-y700_2022
++LOCAL_MODULE_PATH := $(TARGET_OUT_PRODUCT)/overlay
++LOCAL_IS_RUNTIME_RESOURCE_OVERLAY := true
++LOCAL_PRIVATE_PLATFORM_APIS := true
++include $(BUILD_PACKAGE)
+diff --git a/Lenovo/Y700-2022/AndroidManifest.xml b/Lenovo/Y700-2022/AndroidManifest.xml
+new file mode 100644
+index 0000000..8a246ae
+--- /dev/null
++++ b/Lenovo/Y700-2022/AndroidManifest.xml
+@@ -0,0 +1,10 @@
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++        package="me.phh.treble.overlay.lenovo.y700_2022"
++        android:versionCode="1"
++        android:versionName="1.0">
++        <overlay android:targetPackage="android"
++                android:requiredSystemPropertyName="ro.vendor.build.fingerprint"
++                android:requiredSystemPropertyValue="+^Lenovo/TB-9707F"
++        android:priority="321"
++        android:isStatic="true" />
++</manifest>
+diff --git a/Lenovo/Y700-2022/res/values/config.xml b/Lenovo/Y700-2022/res/values/config.xml
+new file mode 100644
+index 0000000..6e110df
+--- /dev/null
++++ b/Lenovo/Y700-2022/res/values/config.xml
+@@ -0,0 +1,18 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Lenovo Legion Y700 (2022), TB-9707F: SD870, 8.8" 2560x1600 60/120 Hz LCD, Wi-Fi only -->
++<resources>
++    <!-- Wi-Fi only: no calls, SMS or mobile data -->
++    <bool name="config_voice_capable">false</bool>
++    <bool name="config_sms_capable">false</bool>
++    <bool name="config_mobile_data_capable">false</bool>
++
++    <!-- The WCD938x jack is reported by the "kona-mtp-snd-card Headset Jack"
++         input device; the kernel has no h2w switch. -->
++    <bool name="config_useDevInputEventForAudioJack">true</bool>
++
++    <!-- AOSP's default refresh rate of 60 caps the panel at 60 Hz even when the
++         user raises the peak rate. Default to the panel's 120 Hz; the min/peak
++         refresh rate settings can still lower it. -->
++    <integer name="config_defaultRefreshRate">120</integer>
++    <integer name="config_defaultPeakRefreshRate">120</integer>
++</resources>
+diff --git a/overlay.mk b/overlay.mk
+index e07fd8e..034fade 100644
+--- a/overlay.mk
++++ b/overlay.mk
+@@ -82,6 +82,7 @@ PRODUCT_PACKAGES += \
+ 	treble-overlay-lenovo-s5pro \
+ 	treble-overlay-lenovo-tabv7 \
+ 	treble-overlay-lenovo-tabv7-systemui \
++	treble-overlay-lenovo-y700_2022 \
+ 	treble-overlay-lenovo-y700_2023 \
+ 	treble-overlay-lenovo-y700_2023-systemui \
+ 	treble-overlay-lenovo-z5 \
+-- 
+2.43.0
+
