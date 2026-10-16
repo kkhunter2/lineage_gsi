@@ -4,8 +4,10 @@
 #
 # Expects this repo at <tree>/lineage_gsi (as placed by manifest/lineage_gsi.xml).
 #
-# Usage: lineage_gsi/scripts/build.sh [--sync] [variant ...]
+# Usage: lineage_gsi/scripts/build.sh [--sync|--reset] [variant ...]
 #   --sync     discard applied patches, repo sync, re-apply patches
+#   --reset    discard applied patches and re-apply them without a network sync
+#              (only lineage_gsi itself is fetched, to pick up patch changes)
 #   variant    bgN4 (default), bvN4, bgNE, bvNE
 #
 # Output: <tree>/release/<date>/ with the compressed image, its sha256 and a
@@ -19,10 +21,12 @@ JOBS="${JOBS:-$(nproc --all)}"
 JAVA17="${JAVA17:-/usr/lib/jvm/java-17-openjdk-amd64}"
 
 sync=0
+reset=0
 variants=()
 for arg in "$@"; do
     case "$arg" in
         --sync) sync=1 ;;
+        --reset) reset=1 ;;
         bgN4|bvN4|bgNE|bvNE) variants+=("$arg") ;;
         *) echo "unknown argument: $arg" >&2; exit 2 ;;
     esac
@@ -32,11 +36,16 @@ done
 cd "$TREE"
 marker="$TREE/.lineage_gsi_patched"
 
-if [ "$sync" -eq 1 ]; then
-    echo "### Resetting projects and syncing"
+if [ "$sync" -eq 1 ] || [ "$reset" -eq 1 ]; then
+    echo "### Discarding applied patches"
     repo forall -c 'git am --abort >/dev/null 2>&1; git reset -q --hard; git clean -qfd' || true
     rm -f "$marker"
-    repo sync -c --force-sync --optimized-fetch --no-tags --no-clone-bundle --prune -j"$JOBS"
+    if [ "$sync" -eq 1 ]; then
+        repo sync -c --force-sync --optimized-fetch --no-tags --no-clone-bundle --prune -j"$JOBS"
+    else
+        repo sync -l -j"$JOBS"
+        repo sync -c --force-sync --no-tags --no-clone-bundle lineage_gsi
+    fi
 fi
 
 if [ ! -f "$marker" ]; then

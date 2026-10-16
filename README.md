@@ -62,6 +62,7 @@ repo sync -c --force-sync --optimized-fetch --no-tags --no-clone-bundle --prune 
 
 lineage_gsi/scripts/build.sh            # applies patches, builds treble_app and bgN4
 lineage_gsi/scripts/build.sh --sync     # later: re-sync and rebuild from scratch
+lineage_gsi/scripts/build.sh --reset    # re-apply patches after changing them, no full sync
 ```
 
 `build.sh` also accepts `bvN4`, `bgNE` and `bvNE`. Output goes to
