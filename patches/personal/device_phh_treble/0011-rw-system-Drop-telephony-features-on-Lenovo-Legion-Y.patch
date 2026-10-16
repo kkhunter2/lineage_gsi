@@ -12,12 +12,16 @@ On that vendor fingerprint, bind-mount a list of unavailable telephony
 features over the GSI's telephony permission files. SystemConfig removes
 unavailable features after reading every partition, so this also drops
 any the vendor declares. Same feature list as the Magisk module verified
-on the device.
+on the device, plus the newer telephony sub-features.
+
+The covered file also declares android.software.telecom. The Magisk
+module added its own file and so left that in place; declare it again
+here so VoIP apps keep their Telecom call integration.
 ---
  base.mk                       |  1 +
- files/wifi-only-telephony.xml | 17 +++++++++++++++++
+ files/wifi-only-telephony.xml | 26 ++++++++++++++++++++++++++
  rw-system.sh                  |  9 +++++++++
- 3 files changed, 27 insertions(+)
+ 3 files changed, 36 insertions(+)
  create mode 100644 files/wifi-only-telephony.xml
 
 diff --git a/base.mk b/base.mk
@@ -34,15 +38,20 @@ index 31be9b9..c92fa53 100644
      device/phh/treble/files/moto-uinput-egis.kl.raw:system/phh/moto-uinput-egis.kl \
 diff --git a/files/wifi-only-telephony.xml b/files/wifi-only-telephony.xml
 new file mode 100644
-index 0000000..751649c
+index 0000000..ab535a4
 --- /dev/null
 +++ b/files/wifi-only-telephony.xml
-@@ -0,0 +1,17 @@
+@@ -0,0 +1,26 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<!-- Bind-mounted by rw-system.sh over the telephony permission files on
 +     Wi-Fi-only devices. Declaring these features makes com.android.phone
 +     keep retrying a modem that isn't there. -->
 +<permissions>
++    <!-- The telephony file being covered also declares Telecom. Keep it: it is
++         what VoIP apps use for system call integration, and the vendors this
++         is used on predate Android 14, so nothing else declares it. -->
++    <feature name="android.software.telecom" />
++
 +    <unavailable-feature name="android.hardware.telephony" />
 +    <unavailable-feature name="android.hardware.telephony.gsm" />
 +    <unavailable-feature name="android.hardware.telephony.cdma" />
@@ -54,6 +63,10 @@ index 0000000..751649c
 +    <unavailable-feature name="android.hardware.telephony.subscription" />
 +    <unavailable-feature name="android.hardware.telephony.euicc" />
 +    <unavailable-feature name="android.hardware.telephony.mbms" />
++    <unavailable-feature name="android.hardware.telephony.euicc.mep" />
++    <unavailable-feature name="android.hardware.telephony.ims.singlereg" />
++    <unavailable-feature name="android.hardware.telephony.carrierlock" />
++    <unavailable-feature name="android.hardware.telephony.satellite" />
 +</permissions>
 diff --git a/rw-system.sh b/rw-system.sh
 index 8ca3209..96488f9 100644

@@ -51,7 +51,8 @@ depends on how closely the vendor followed Treble.
   - 3.5 mm headset detection through the jack's input device,
   - telephony features and UI removed, which stops `com.android.phone`
     from looping on a modem that isn't there,
-  - cover wake/sleep from the hall sensor (TrebleApp).
+  - cover wake/sleep from the hall sensor (TrebleApp, which matches the
+    stock `TB-9707F_PRC` vendor fingerprint).
 - Samsung Galaxy A04 (SM-A045F): a user booted a build of this patch set via DSU.
 
 ## Build

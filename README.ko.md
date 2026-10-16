@@ -45,7 +45,7 @@ arm64 A/B Treble 기기용 비공식 LineageOS 23.2(Android 16 QPR2) GSI입니�
   - 120Hz로 시작합니다(AOSP 기본값으로는 이 패널이 60Hz에 묶입니다).
   - 3.5mm 잭의 이어폰 연결을 잭 input 장치로 감지합니다.
   - telephony 기능과 관련 UI를 빼서, 없는 모뎀을 계속 찾던 `com.android.phone`의 반복을 멈춥니다.
-  - 커버를 덮고 열면 홀 센서로 화면이 꺼지고 켜집니다(TrebleApp).
+  - 커버를 덮고 열면 홀 센서로 화면이 꺼지고 켜집니다(TrebleApp. 순정 `TB-9707F_PRC` vendor fingerprint 기준).
 - Samsung Galaxy A04(SM-A045F): 한 사용자가 이 패치셋 빌드를 DSU로 부팅해 확인했습니다.
 
 ## 빌드
