@@ -77,7 +77,9 @@ apply, so a build never silently goes out without a patch.
 treble_app needs JDK 17 (`JAVA17=/path/to/jdk17` if it isn't at the Ubuntu
 default). Install ccache for faster rebuilds.
 
-Before publishing, `scripts/dsu-test.sh install <img.xz>` boots a build on a
+`scripts/inspect-image.sh` checks a finished build offline (patch results
+inside system.img, checksums, the release metadata). Before publishing,
+`scripts/dsu-test.sh install <img.xz>` boots a build on a
 connected device through DSU without touching its installed system, and
 `scripts/dsu-test.sh check` then verifies face unlock and adaptive brightness.
 `scripts/release.sh --draft` uploads a release without publishing it;
