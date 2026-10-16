@@ -72,6 +72,12 @@ apply, so a build never silently goes out without a patch.
 treble_app needs JDK 17 (`JAVA17=/path/to/jdk17` if it isn't at the Ubuntu
 default). Install ccache for faster rebuilds.
 
+Before publishing, `scripts/dsu-test.sh install <img.xz>` boots a build on a
+connected device through DSU without touching its installed system, and
+`scripts/dsu-test.sh check` then verifies face unlock and adaptive brightness.
+`scripts/release.sh --draft` uploads a release without publishing it;
+`scripts/release.sh --publish <tag>` publishes it once the build checks out.
+
 ## Credits
 
 - [MisterZtr](https://github.com/MisterZtr) — the LineageOS_gsi patch set this is built on
