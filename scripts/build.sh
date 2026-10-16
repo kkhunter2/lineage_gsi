@@ -85,6 +85,29 @@ for variant in "${variants[@]}"; do
     (cd "$outdir" && sha256sum "$name.xz" > "$name.xz.sha256")
 done
 
+# Pin each project at the revision repo synced rather than at HEAD: patched
+# projects carry local commits that exist nowhere upstream. lineage_gsi itself
+# is pinned at the commit whose patches were applied.
+synced="$(mktemp)"
+repo forall -c 'echo "$REPO_PATH $REPO_LREV"' > "$synced"
 repo manifest -r -o "$outdir/manifest-snapshot.xml"
+python3 -I - "$outdir/manifest-snapshot.xml" "$synced" "$(cat "$marker")" <<'EOF'
+import re, sys
+snapshot, synced, patched = sys.argv[1:]
+rev = dict(line.split() for line in open(synced) if len(line.split()) == 2)
+rev["lineage_gsi"] = patched
+def attr(tag, key):
+    m = re.search(r'\b%s="([^"]*)"' % key, tag)
+    return m.group(1) if m else None
+def pin(m):
+    tag = m.group(0)
+    path = attr(tag, "path") or attr(tag, "name")
+    if path in rev:
+        tag = re.sub(r'\brevision="[^"]*"', 'revision="%s"' % rev[path], tag)
+    return tag
+text = open(snapshot).read()
+open(snapshot, "w").write(re.sub(r"<project\b[^>]*>", pin, text))
+EOF
+rm -f "$synced"
 cp "$marker" "$outdir/.commit"
 ls -lh "$outdir"
