@@ -59,7 +59,10 @@ check() {
     echo "fingerprint:     $(prop ro.build.fingerprint)"
     echo "security patch:  $(prop ro.build.version.security_patch)"
     echo "vendor:          $(prop ro.vendor.build.fingerprint)"
-    echo "running via DSU: $( [ "$(prop ro.gsid.image_running)" = 1 ] && echo yes || echo no)"
+    # The shell can't read ro.gsid.image_running, so check that /system is
+    # mounted from the DSU's system_gsi partition.
+    echo "running via DSU: $("$ADB" shell 'g=$(readlink /dev/block/mapper/system_gsi 2>/dev/null)
+        [ -n "$g" ] && df /system | grep -q "^$g " && echo yes || echo no' | tr -d '\r')"
     echo
 
     [ "$(prop sys.boot_completed)" = 1 ]; result "boot completed" $?
@@ -124,12 +127,15 @@ y700_checks() {
     echo "--- Y700 info for manual follow-up"
     echo "refresh now:   $(grep -m1 -oE 'renderFrameRate [0-9.]+' <<<"$display")"
     echo "cameras:       $("$ADB" shell dumpsys media.camera | grep -m1 -E 'Number of camera devices' | tr -d '\r')"
-    echo "DT2W node:     $("$ADB" shell 'ls /proc/gesture_control /sys/devices/virtual/touch/tp_dev/gesture_on 2>/dev/null' | tr -d '\r' | tr '\n' ' ')"
+    # SELinux hides the node from the shell user; ask root if there is one.
+    echo "DT2W node:     $("$ADB" shell 'n=/sys/devices/virtual/touch/tp_dev/gesture_on; { ls $n || su -c "ls $n && cat $n"; } 2>/dev/null' | tr -d '\r' | tr '\n' ' ')"
     echo "pen input:     $("$ADB" shell dumpsys input | grep -m1 -oE 'NVTCapacitivePen' | tr -d '\r')"
     echo "color mgmt:    use_color_management=$(prop ro.surface_flinger.use_color_management) vndk=$(prop ro.vndk.version)"
     echo "audio switch:  $("$ADB" shell 'ls /sys/class/switch 2>/dev/null' | tr -d '\r' | tr '\n' ' ')"
     echo "microSD:       $("$ADB" shell sm list-disks | tr -d '\r' | tr '\n' ' ')"
-    echo "game lever:    $("$ADB" shell getevent -pl 2>/dev/null | grep -A6 -m1 'gpio-keys' | grep -oE 'KEY_[A-Z0-9_]+|SW_[A-Z_]+' | sort -u | tr '\n' ' ')"
+    # The lever is its own input device sending raw key codes 0xf9/0xfa, which
+    # have no Linux name and no Android key layout entry.
+    echo "game lever:    $("$ADB" shell getevent -pl 2>/dev/null | tr -d '\r' | grep -A3 -m1 '"game_mode_switcher"' | grep -oE 'KEY \(0001\):.*' | tr -s ' ')"
     echo "Manual: headphones in the jack, DP monitor audio, pen, DT2W in Phh Treble Settings > Lenovo, cover close/open."
 }
 
