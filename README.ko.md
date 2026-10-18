@@ -46,6 +46,10 @@ arm64 A/B Treble 기기용 비공식 LineageOS 23.2(Android 16 QPR2) GSI입니�
   - 3.5mm 잭의 이어폰 연결을 잭 input 장치로 감지합니다.
   - telephony 기능과 관련 UI를 빼서, 없는 모뎀을 계속 찾던 `com.android.phone`의 반복을 멈춥니다.
   - 커버를 덮고 열면 홀 센서로 화면이 꺼지고 켜집니다(TrebleApp. 순정 `TB-9707F_PRC` vendor fingerprint 기준).
+
+  2026-10-19에 v2026.10.16을 DSU로 부팅해서 확인했습니다. 얼굴인식, 자동밝기, 120Hz, Wi-Fi,
+  블루투스, 앞뒤 카메라, 스피커, 진동, 더블탭 깨우기가 됩니다. 이어폰, 커버, 펜, DP 출력,
+  microSD는 아직 못 해 봤습니다.
 - Samsung Galaxy A04(SM-A045F): 한 사용자가 이 패치셋 빌드를 DSU로 부팅해 확인했습니다.
 
 ## 빌드

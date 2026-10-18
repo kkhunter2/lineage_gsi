@@ -53,6 +53,11 @@ depends on how closely the vendor followed Treble.
     from looping on a modem that isn't there,
   - cover wake/sleep from the hall sensor (TrebleApp, which matches the
     stock `TB-9707F_PRC` vendor fingerprint).
+
+  v2026.10.16 was booted on it via DSU on 2026-10-19. Face unlock, adaptive
+  brightness, 120 Hz, Wi-Fi, Bluetooth, both cameras, speakers, vibration and
+  double-tap to wake work. Headphones, the cover, the pen, DisplayPort and
+  microSD have not been tried yet.
 - Samsung Galaxy A04 (SM-A045F): a user booted a build of this patch set via DSU.
 
 ## Build
